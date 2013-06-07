@@ -1,6 +1,5 @@
 package com.sfs.entity;
 
-import java.util.Date;
 
 /**
  * This class contains all information about a request's communication needs.
@@ -8,25 +7,20 @@ import java.util.Date;
  * @author Yiding Zhang
  *
  */
-public class Need {
-	
-	/**
-	 * It represents the type of communication needs. 
-	 * We only have one type for now.
-	 */
-	public enum NeedType {
-		//Fixed, 
-		One_Off
-	}
+public abstract class Need {
 	
 	public enum Sender {
 		User, Application
 	}
 	
+	public enum Priority {
+		High, Normal, Low
+	}
+	
 	public Need() {
 	}
 
-	//The unique identification of communication need.
+	//The unique identification of a request need.
 	private int needId;
 	
 	//The name of the application.
@@ -35,13 +29,10 @@ public class Need {
 	//The sender of network request.
 	private Sender sender;
 	
-	//The maximal tolerated delay time, its unit is millisecond.
-	private long delay;
+	//The priority of the request.
+	private Priority priority;
 	
-	//The specified time for network access.
-	private Date time;
-	
-	private NeedType needType = NeedType.One_Off;
+	private String description;
 	
 	public int getNeedId() {
 		return needId;
@@ -50,7 +41,7 @@ public class Need {
 	public void setNeedId(int needId) {
 		this.needId = needId;
 	}
-	
+
 	public String getAppName() {
 		return appName;
 	}
@@ -67,28 +58,20 @@ public class Need {
 		this.sender = sender;
 	}
 
-	public long getDelay() {
-		return delay;
+	public Priority getPriority() {
+		return priority;
 	}
 
-	public void setDelay(long delay) {
-		this.delay = delay;
+	public void setPriority(Priority priority) {
+		this.priority = priority;
 	}
 
-	public Date getTime() {
-		return time;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setTime(Date time) {
-		this.time = time;
-	}
-	
-	public NeedType getNeedType() {
-		return needType;
-	}
-
-	public void setNeedType(NeedType needType) {
-		this.needType = needType;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	@Override

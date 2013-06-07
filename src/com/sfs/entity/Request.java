@@ -34,5 +34,4 @@ public class Request {
 		this.networkRequest = networkRequest;
 	}
 	
-	
 }

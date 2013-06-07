@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.sfs.android.NetworkService;
 import com.sfs.entity.Need;
+import com.sfs.entity.PeriodicRequestNeed;
 import com.sfs.entity.Request;
+import com.sfs.entity.RequestPlan;
 import com.sfs.entity.Need.Sender;
 
 /**
- *	This is a framework simulator.  
+ *	This is the framework simulator.  
  *
  */
 public class Framework {
@@ -37,10 +40,8 @@ public class Framework {
 	 * @param requests
 	 */
 	public void receiveRequest(Request request) {
-		int id = idGenerator.incrementAndGet();
-		request.getNeed().setNeedId(id);
-		scheduler.addNeed(request.getNeed());
-		requestMap.put(id, request);
+		scheduler.addRequest(request.getNeed());
+		requestMap.put(request.getNeed().getNeedId(), request);
 		System.out.println("Recieved request " + request.getNeed().getAppName() + request.getNeed().getNeedId());
 	}
 	
@@ -61,19 +62,21 @@ public class Framework {
 	public void start() {
 		
 		Thread t = new Thread(new Runnable() {
-			
 			@Override
 			public void run() {
 				System.out.println("Framework is running now!");
 				boolean done = false;
-				while(!done) {
-					Long time = System.currentTimeMillis();
-					if(time >= scheduler.nextTime() && scheduler.nextTime() != -1) {
+				Date next = scheduler.getNextTime();
+				while(!done) { //Some conditions.
+					Date now = new Date();
+					if(!now.before(next)) { //TODO
+						System.out.println("--------------------");
 						List<Request> requests = new ArrayList<Request>();
 						for(int i : scheduler.next()) {
 							requests.add( requestMap.get(i));
 						}
 						batchSendRequest(requests);
+						next = scheduler.getNextTime();
 					}
 				}
 			}
@@ -84,27 +87,33 @@ public class Framework {
 	
 	public static void main(String[] args) {
 		Scheduler scheduler = new SimpleScheduler();
-		Framework framework = new Framework(scheduler, new NetworkService());
+		Framework framework = new Framework(scheduler, new NetworkService() {
+			
+			@Override
+			public Date send(Object request) {
+				return new Date();
+			}
+			
+			@Override
+			public void feedback(String app, Date date) {
+			}
+		});
+		
+		
+		int n = 6;
+		for(int i = 1; i < n; i++) {
+			PeriodicRequestNeed need = new PeriodicRequestNeed();
+			need.setAppName("Test");
+			need.setNeedId(i);
+			need.setInterval(3+i*2);
+			need.setSlack(n-i);
+			RequestPlan plan = scheduler.addRequest(need);
+			System.out.println("## Request" + plan.getRequestID() + "  min:" + plan.getMinInterval() +
+					"  default:" + plan.getDefInterval() + "  max:" + plan.getMaxInterval());
+			Request r = new Request("Test_facebook", need);
+			framework.receiveRequest(r);
+		}
 		framework.start();
-		
-		Need n = new Need();
-		n.setAppName("email");
-		n.setSender(Sender.Application);
-		n.setDelay(1000);
-		n.setTime(new Date(System.currentTimeMillis()));
-		
-		Request r = new Request("Test_email", n);
-		framework.receiveRequest(r);
-		
-		n = new Need();
-		n.setAppName("facebook");
-		n.setSender(Sender.Application);
-		n.setDelay(1000);
-		n.setTime(new Date(System.currentTimeMillis() + 2000));
-		
-		r = new Request("Test_facebook", n);
-		framework.receiveRequest(r);
-		
 	}
 	
 }
